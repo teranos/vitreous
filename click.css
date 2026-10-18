@@ -1,9 +1,9 @@
-/* Click. Pressed, a surface settles back and turns strong. This is the only
-   place click is written; a site adds .pressable, never its own :active. */
+/* Click. Pressed, a surface settles back. Its colours stay as they are, so
+   its text keeps the contrast it had at rest (WCAG 2.2, 1.4.3). This is the
+   only place click is written; a site adds .pressable, never its own :active. */
 
 .pressable:active {
   transform: none;
-  background: var(--glass-strong);
 }
 
 .pressable:focus-visible {
