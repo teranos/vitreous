@@ -1,0 +1,12 @@
+/* Click. Pressed, a surface settles back and turns strong. This is the only
+   place click is written; a site adds .pressable, never its own :active. */
+
+.pressable:active {
+  transform: none;
+  background: var(--glass-strong);
+}
+
+.pressable:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}

@@ -1,0 +1,13 @@
+/* How long a change of state takes. Reduced motion takes none. */
+
+:root {
+  --motion: 0.15s;
+}
+
+.pressable {
+  transition: transform var(--motion), background-color var(--motion), border-color var(--motion);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pressable { transition: none; }
+}

@@ -1,0 +1,7 @@
+/* Shadow: x, y, blur, spread, then the ink's alpha. */
+
+:root {
+  --shadow-glass: 12px 21px 32px -17px rgb(var(--ink-rgb) / 0.55);
+}
+
+.shadow { box-shadow: var(--shadow-glass); }

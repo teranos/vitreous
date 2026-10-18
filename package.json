@@ -1,0 +1,9 @@
+{
+  "name": "vitreous",
+  "version": "0.1.0",
+  "files": ["vitreous.css", "glass.css", "shadow.css", "motion.css", "hover.css", "click.css"],
+  "exports": {
+    ".": "./vitreous.css",
+    "./*.css": "./*.css"
+  }
+}

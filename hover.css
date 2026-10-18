@@ -1,0 +1,13 @@
+/* Hover. Under the pointer a pressable surface rises. This is the only place
+   hover is written; a site adds .pressable, never its own :hover. */
+
+:root {
+  --hover-lift: -0.125rem;
+}
+
+.pressable { cursor: pointer; }
+.pressable:hover { transform: translateY(var(--hover-lift)); }
+
+@media (prefers-reduced-motion: reduce) {
+  .pressable:hover { transform: none; }
+}

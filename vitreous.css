@@ -5,42 +5,12 @@
      --glass-rgb  what the glass is made of: white on a light page, a dark
                   colour in a dark theme
 
-   and, as colours, the palette its components read:
-     --background --foreground --card --card-foreground
-     --primary --primary-foreground --secondary --muted-foreground
-     --accent --border --radius
-
    Then it loads its own store after this file. A store states only what it
    moves, at :root or on a selector; everything it leaves out stays as
    written here. */
 
-:root {
-  /* Glass: alphas of the surface and its edge, blur in pixels, saturate and
-     brightness as multipliers where 1 changes nothing. Two thicknesses: the
-     panel copy sits in, and the thin glass of bars and of glass over detail
-     worth seeing through to. */
-  --glass-alpha: 0.64;
-  --glass-strong-alpha: 0.88;
-  --glass-border-alpha: 0.55;
-  --glass-blur: 24px;
-  --glass-saturate: 1;
-  --glass-brightness: 1;
-  --glass-thin-alpha: 0.42;
-  --glass-thin-border-alpha: 0.66;
-  --glass-thin-blur: 7px;
-  --glass-thin-saturate: 1.2;
-  --glass-thin-brightness: 1;
-
-  /* Shadow: x, y, blur, spread, then the ink's alpha. */
-  --shadow-glass: 12px 21px 32px -17px rgb(var(--ink-rgb) / 0.55);
-
-  --glass: rgb(var(--glass-rgb) / var(--glass-alpha));
-  --glass-strong: rgb(var(--glass-rgb) / var(--glass-strong-alpha));
-  --glass-border: rgb(var(--glass-rgb) / var(--glass-border-alpha));
-  --glass-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate))
-                  brightness(var(--glass-brightness));
-  --glass-thin: rgb(var(--glass-rgb) / var(--glass-thin-alpha));
-  --glass-thin-border: rgb(var(--glass-rgb) / var(--glass-thin-border-alpha));
-  --glass-thin-filter: blur(var(--glass-thin-blur)) saturate(var(--glass-thin-saturate))
-                       brightness(var(--glass-thin-brightness));
-}
+@import "./glass.css";
+@import "./shadow.css";
+@import "./motion.css";
+@import "./hover.css";
+@import "./click.css";

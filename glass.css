@@ -1,0 +1,42 @@
+/* Glass: alphas of the surface and its edge, blur in pixels, saturate and
+   brightness as multipliers where 1 changes nothing. Two thicknesses: the
+   panel copy sits in, and the thin glass of bars and of glass over detail
+   worth seeing through to. */
+
+:root {
+  --glass-alpha: 0.64;
+  --glass-strong-alpha: 0.88;
+  --glass-border-alpha: 0.55;
+  --glass-blur: 24px;
+  --glass-saturate: 1;
+  --glass-brightness: 1;
+  --glass-thin-alpha: 0.42;
+  --glass-thin-border-alpha: 0.66;
+  --glass-thin-blur: 7px;
+  --glass-thin-saturate: 1.2;
+  --glass-thin-brightness: 1;
+
+  --glass: rgb(var(--glass-rgb) / var(--glass-alpha));
+  --glass-strong: rgb(var(--glass-rgb) / var(--glass-strong-alpha));
+  --glass-border: rgb(var(--glass-rgb) / var(--glass-border-alpha));
+  --glass-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate))
+                  brightness(var(--glass-brightness));
+  --glass-thin: rgb(var(--glass-rgb) / var(--glass-thin-alpha));
+  --glass-thin-border: rgb(var(--glass-rgb) / var(--glass-thin-border-alpha));
+  --glass-thin-filter: blur(var(--glass-thin-blur)) saturate(var(--glass-thin-saturate))
+                       brightness(var(--glass-thin-brightness));
+}
+
+.glass {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: var(--glass-filter);
+  -webkit-backdrop-filter: var(--glass-filter);
+}
+
+.glass-thin {
+  background: var(--glass-thin);
+  border: 1px solid var(--glass-thin-border);
+  backdrop-filter: var(--glass-thin-filter);
+  -webkit-backdrop-filter: var(--glass-thin-filter);
+}
