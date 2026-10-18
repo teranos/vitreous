@@ -4,4 +4,4 @@
   --shadow-glass: 12px 21px 32px -17px rgb(var(--ink-rgb) / 0.55);
 }
 
-.shadow { box-shadow: var(--shadow-glass); }
+.shadow-glass { box-shadow: var(--shadow-glass); }
