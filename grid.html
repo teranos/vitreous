@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>grid</title>
+<style>
+  html, body { margin: 0; height: 100%; }
+  body { display: grid; place-items: center; background: #fff; font: 13px/1 ui-sans-serif, system-ui, sans-serif; color: #444; }
+
+  .frame {
+    --size: min(72vw, 72vh);
+    --rail: 4rem;
+    display: grid;
+    grid-template-columns: var(--rail) var(--size);
+    grid-template-rows: var(--size) var(--rail);
+    gap: 0.75rem;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    grid-template-rows: repeat(10, 1fr);
+    gap: calc(var(--size) / 60);
+  }
+  .grid div { border-radius: 18%; background: #ddd; }
+
+  /* Each slider is exactly the grid's length; its maximum sits past the end. */
+  .y, .x { position: relative; display: grid; place-items: center; }
+  .y input[type=range] { writing-mode: vertical-lr; direction: rtl; height: var(--size); width: auto; margin: 0; }
+  .x input[type=range] { width: var(--size); margin: 0; }
+  input[type=range] { accent-color: currentColor; }
+  /* Mirrored across the diagonal: each maximum past the far end, each minimum
+     past the near end, the same distance out. */
+  .y .num, .x .num { position: absolute; }
+  .y .num { left: 50%; transform: translateX(-50%); }
+  .x .num { top: 50%; transform: translateY(-50%); }
+  #y-max { bottom: 100%; margin-bottom: 0.25rem; }
+  /* The minimums: the bottom one under its slider at the leftmost end, the
+     left one beside its slider at the bottommost end, right side against it. */
+  #y-min { bottom: 0; right: calc(50% + 0.6rem); left: auto; transform: none; }
+  #x-min { left: 0; top: calc(50% + 0.6rem); right: auto; transform: none; }
+  #x-max { left: 100%; margin-left: 0.25rem; }
+
+  .num {
+    width: 3.5rem; padding: 0.2rem 0.25rem; text-align: center;
+    font: inherit; font-variant-numeric: tabular-nums; color: inherit;
+    border: 1px solid #ccc; border-radius: 6px; background: #fff;
+  }
+  .num:focus { border-color: #444; outline: none; }
+
+  /* Which parameter each slider is, outside its rail. */
+  .name, .page { position: absolute; white-space: nowrap; font-weight: 600;
+    padding: 0.2rem 0.4rem; border: 1px solid #ccc; border-radius: 6px; background: #fff; }
+  .x .name { top: 100%; margin-top: 0.25rem; left: 50%; transform: translateX(-50%); }
+  .y .name { right: 100%; margin-right: 0.25rem; top: 50%; writing-mode: vertical-lr; transform: translateY(-50%) rotate(180deg); }
+  .page { position: fixed; top: 1rem; left: 50%; transform: translateX(-50%); font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+  <div class="page" id="page"></div>
+  <div class="frame">
+    <div class="y">
+      <span class="name" id="y-name"></span>
+      <input class="num" id="y-max" value="1">
+      <input type="range" id="y" aria-label="y">
+      <input class="num" id="y-min" value="0" aria-label="y minimum">
+    </div>
+    <div class="grid" id="grid"></div>
+    <div></div>
+    <div class="x">
+      <input class="num" id="x-min" value="0" aria-label="x minimum">
+      <input type="range" id="x" aria-label="x">
+      <input class="num" id="x-max" value="1">
+      <span class="name" id="x-name"></span>
+    </div>
+  </div>
+<script>
+  // Every parameter: its value as shipped, and the range the system allows.
+  const P = {
+    'glass-alpha':              { v: 0.64, lo: 0,    hi: 1 },
+    'glass-strong-alpha':       { v: 0.88, lo: 0,    hi: 1 },
+    'glass-border-alpha':       { v: 0.55, lo: 0,    hi: 1 },
+    'glass-blur':               { v: 24,   lo: 0,    hi: 60 },
+    'glass-saturate':           { v: 1,    lo: 0,    hi: 3 },
+    'glass-brightness':         { v: 1,    lo: 0.5,  hi: 1.5 },
+    'glass-thin-alpha':         { v: 0.42, lo: 0,    hi: 1 },
+    'glass-thin-border-alpha':  { v: 0.66, lo: 0,    hi: 1 },
+    'glass-thin-blur':          { v: 7,    lo: 0,    hi: 60 },
+    'glass-thin-saturate':      { v: 1.2,  lo: 0,    hi: 3 },
+    'glass-thin-brightness':    { v: 1,    lo: 0.5,  hi: 1.5 },
+    'shadow-x':                 { v: 12,   lo: -120, hi: 120 },
+    'shadow-y':                 { v: 21,   lo: -120, hi: 120 },
+    'shadow-blur':              { v: 32,   lo: 0,    hi: 200 },
+    'shadow-spread':            { v: -17,  lo: -120, hi: 120 },
+    'shadow-alpha':             { v: 0.55, lo: 0,    hi: 1 },
+  };
+  const names = Object.keys(P);
+  const pages = [];
+  for (let i = 0; i < names.length; i++)
+    for (let j = i + 1; j < names.length; j++) pages.push([names[i], names[j]]);
+  let page = 0;
+
+  // What sits behind the grid. Up and down page through these; each entry is a
+  // CSS background.
+  const patterns = ['none', 'repeating-linear-gradient(45deg, #e4e4e4 0 10px, #fff 10px 20px)'];
+  let pattern = 0;
+
+  const $ = id => document.getElementById(id);
+  const grid = $('grid');
+  grid.innerHTML = '<div></div>'.repeat(100);
+  const cells = [...grid.children];
+  const round = n => +n.toFixed(2);
+  const stop = (p, k) => round(P[p].lo + (P[p].hi - P[p].lo) * k / 9);
+
+  // A square is the glass drawn with every parameter as set, except the two on the axes.
+  function glass(v, thin) {
+    const g = thin ? 'glass-thin' : 'glass';
+    const filter = `blur(${v[g + '-blur']}px) saturate(${v[g + '-saturate']}) brightness(${v[g + '-brightness']})`;
+    return `background: rgb(255 255 255 / ${v[g + '-alpha']});`
+      + `border: 1px solid rgb(255 255 255 / ${v[g + '-border-alpha']});`
+      + `backdrop-filter: ${filter}; -webkit-backdrop-filter: ${filter};`
+      + `box-shadow: ${v['shadow-x']}px ${v['shadow-y']}px ${v['shadow-blur']}px ${v['shadow-spread']}px rgb(10 31 43 / ${v['shadow-alpha']});`;
+  }
+
+  function draw() {
+    const [x, y] = pages[page];
+    const thin = x.includes('thin') || y.includes('thin');
+    const base = Object.fromEntries(names.map(n => [n, P[n].v]));
+    cells.forEach((cell, i) => {
+      const col = i % 10, row = 9 - Math.floor(i / 10);
+      cell.style.cssText = glass({ ...base, [x]: stop(x, col), [y]: stop(y, row) }, thin);
+    });
+  }
+
+  function show() {
+    const [x, y] = pages[page];
+    $('page').textContent = `${page + 1} / ${pages.length} · pattern ${pattern + 1} / ${patterns.length}`;
+    document.body.style.background = patterns[pattern] === 'none' ? '' : patterns[pattern];
+    for (const [axis, p] of [['x', x], ['y', y]]) {
+      $(axis + '-name').textContent = p;
+      $(axis + '-min').value = P[p].lo;
+      $(axis + '-max').value = P[p].hi;
+      const slider = $(axis);
+      slider.min = P[p].lo;
+      slider.max = P[p].hi;
+      slider.step = (P[p].hi - P[p].lo) / 9;
+      slider.value = P[p].v;
+    }
+    draw();
+  }
+
+  for (const axis of ['x', 'y']) {
+    const which = () => pages[page][axis === 'x' ? 0 : 1];
+    $(axis).addEventListener('input', e => { P[which()].v = round(Number(e.target.value)); draw(); });
+    for (const end of ['min', 'max']) {
+      $(axis + '-' + end).addEventListener('change', e => {
+        const p = P[which()], n = Number(e.target.value);
+        if (!Number.isFinite(n)) return;
+        if (end === 'min' && n < p.hi) p.lo = n;
+        if (end === 'max' && n > p.lo) p.hi = n;
+        show();
+      });
+    }
+  }
+
+  // L and R page through every pair, up and down through the patterns. Caught
+  // before a focused slider sees them. Inside a number box the keys type.
+  addEventListener('keydown', e => {
+    if (e.target.classList?.contains('num')) return;
+    const k = e.key.toLowerCase();
+    if (k === 'l' || k === 'arrowleft') page = (page - 1 + pages.length) % pages.length;
+    else if (k === 'r' || k === 'arrowright') page = (page + 1) % pages.length;
+    else if (k === 'arrowup') pattern = (pattern + 1) % patterns.length;
+    else if (k === 'arrowdown') pattern = (pattern - 1 + patterns.length) % patterns.length;
+    else return;
+    e.preventDefault();
+    e.stopPropagation();
+    show();
+  }, true);
+
+  show();
+</script>
+</body>
+</html>
